@@ -1,7 +1,8 @@
 configfile: "samples.yaml"
+configfile: "config.yaml"
 
 rule extract_illumina_barcodes:
-    input: basecalls_dir="/PATHTO/BaseCalls", barcodes_file="/PATHTO/barcodes.tab"
+    input: basecalls_dir="basecallsdir", barcodes_file="barcodes.tab"
     output: barcodes_dir="barcodes", metrics="barcode_metrics.txt"
     shell:
         "module load picard/2.8.0"
@@ -15,11 +16,11 @@ rule extract_illumina_barcodes:
 
 rule illumina_basecalls_to_sam:
     input:
-      basecalls_dir="/PATHTO/BaseCalls",
-      barcodes_dir="/PATHTO/barcodes",
-      library_params="/PATHTO/library_params.txt"
+      basecalls_dir="pathtobasecallsdir",
+      barcodes_dir="pathtobarcodes",
+      library_params="ibrary_params.txt"
     output:
-      demuxed=expand("demuxed/{samplename}.bam", samplename=config[samples])
+      demuxed=expand("demuxed/{samplename}.bam", samplename=config["samples"])
     shell:
         "module load picard/2.8.0"
         "java -Xmx8g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar IlluminaBasecallsToSam "
