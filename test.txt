@@ -1,2 +1,57 @@
 testing 123
 yo whatup kid
+
+
+
+########## SAM TO FASTQ
+
+java -Xmx4g -jar picard-2.9.0.jar SamToFastq \
+I=BN573-S1_unmapped.bam \
+F=/dev/stdout INTERLEAVE=true \
+    | bwa mem -p -t 8 hg38.fa /dev/stdin \
+    | java -Xmx4g -jar picard.jar MergeBamAlignment \
+        UNMAPPED=BN573-S1_unmapped.bam ALIGNED=/dev/stdin \
+        O=BN573-S1_mapped.bam R=hg38.fa \
+        SORT_ORDER=coordinate MAX_GAPS=-1 \
+        ORIENTATIONS=FR
+
+
+########### GROUPING READS BY UMIs
+
+java -Xmx1g -jar fbio.jar GroupReadsByUmi \ 
+    --input=BN573-S1_mapped.bam --output=BN573-S1_grouped.bam \
+    --strategy=adjaceny --edits=1 --min-map-q=20 \
+    --assign-tag=MI
+
+
+########## CALLING CONSENSUS
+
+java -Xmx4g -jar fgbio.jar CallMolecularConsensusReads \
+    --input=BN573-S1_grouped.bam
+    --output=BN573-S1_ssConsensus_unmapped.bam \
+    --min-reads=1 \
+    --rejects=BN573-S1_ssConsensus_rejected.bam \
+    --min-input-base-quality=30 \
+    --read-group-id=BN573-S1
+
+########## ALIGNING READS FROM UNMAPPED BAMs TO REF GENOME AND MERGING UMIs
+
+java -Xmx4g -jar picard-2.9.0.jar SamToFastq \
+I=BN5373-S1_consensus_unmapped.bam \
+F=/dev/stdout INTERLEAVE=true \
+    | bwa mem -p -t 8 hg38.fa /dev/stdin \
+    | java -Xmx4g -jar picard.jar MergeBamAlignment \
+        UNMAPPED=BN573-S1_dsConsensus_unmapped.bam\
+        ALIGNED=/dev/stdin \
+        O=BN573-S1_consensus_mapped.bam R=hg38.fa \
+        SORT_ORDER=coordinate MAX_GAPS=-1 \
+        ORIENTATIONS=FR 
+
+########### FILTERING CONSENSUS READS
+
+java -Xmx4g -jar fgbio.jar FilerConsensusReads \
+--input=BN573-S1_ssConsensus_mapped.bam
+--output=BN573-S1_ssConsensus_mapped_filtered.bam \
+--min-reads=3 \
+--min-base-quality=50 \
+--max-no-call-fraction=0.05
