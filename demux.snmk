@@ -1,5 +1,4 @@
-#Samplename Example   cllid_0381_121407_P_g01.bam
-#Samplename Structure cllid_####_MMDDYY_T_g##
+configfile: "samples.yaml"
 
 rule extract_illumina_barcodes:
     input: basecalls_dir="/PATHTO/BaseCalls", barcodes_file="/PATHTO/barcodes.tab"
@@ -19,7 +18,8 @@ rule illumina_basecalls_to_sam:
       basecalls_dir="/PATHTO/BaseCalls",
       barcodes_dir="/PATHTO/barcodes",
       library_params="/PATHTO/library_params.txt"
-    output: list_unmerged_sample_bam()
+    output:
+      demuxed=expand("demuxed/{samplename}.bam", samplename=config[samples])
     shell:
         "module load picard/2.8.0"
         "java -Xmx8g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar IlluminaBasecallsToSam "
@@ -34,3 +34,7 @@ rule illumina_basecalls_to_sam:
         "ADAPTERS_TO_CHECK=INDEXED "
         "READ_GROUP_ID=BN573-S1 "
         "NUM_PROCESSORS=8 "
+
+
+  #Samplename Example   cllid_0381_121407_P_g01.bam
+  #Samplename Structure cllid_####_MMDDYY_T_g##
