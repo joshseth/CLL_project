@@ -1,0 +1,6 @@
+samples:
+  tumor_sample1:  CLL_Sample1_unmapped.bam
+  tumor_sample2:  CLL_Sample2_unmapped.bam
+  tumor_sample3:  CLL_Sample3_unmapped.bam
+  tumor_sample4:  CLL_Sample4_unmapped.bam
+  tumor_sample5:  CLL_Sample5_unmapped.bam
