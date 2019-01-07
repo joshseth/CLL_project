@@ -83,7 +83,7 @@ rule GroupReadsByUmi:
 
 
 #Consensus reads will be generate using fgbio's CallMolecularConsensusReads with default parameters
-rule CallMolecularConsensusReads
+rule CallMolecularConsensusReads:
     input:
         grouped_sample="/umireads/{samplename}_grouped.bam"
     output:
