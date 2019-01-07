@@ -1,11 +1,20 @@
-configfile: "samples.yaml"
 configfile: "config.yaml"
+configfile: "samples.yaml"
+
+
+##### Target rules #####
+
+rule all:
+  input:
+    "barcode_metrics.txt",
+    expand("demuxed/{samplename}.bam", samplename=config["samples"])
+
 
 rule extract_illumina_barcodes:
     input: basecalls_dir="basecallsdir", barcodes_file="barcodes.tab"
     output: barcodes_dir="barcodes", metrics="barcode_metrics.txt"
     shell:
-        "module load picard/2.8.0"
+        "module load picard/2.8.0 "
         "mkdir -p {output.barcodes_dir}; "
         "java -Xmx4g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar ExtractIlluminaBarcodes BASECALLS_DIR={input.basecalls_dir} "
         "OUTPUT_DIR={output.barcodes_dir} "
@@ -18,7 +27,7 @@ rule illumina_basecalls_to_sam:
     input:
       basecalls_dir="pathtobasecallsdir",
       barcodes_dir="pathtobarcodes",
-      library_params="ibrary_params.txt"
+      library_params="library_params.txt"
     output:
       demuxed=expand("demuxed/{samplename}.bam", samplename=config["samples"])
     shell:
