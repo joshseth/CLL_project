@@ -1,6 +1,6 @@
 configfile: "config.yaml"
 configfile: "samples.yaml"
-
+samplename = config["samples"]
 
 ##### Target rules #####
 
