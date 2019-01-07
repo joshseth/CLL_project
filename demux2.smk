@@ -7,7 +7,7 @@ samplename = config["samples"]
 rule all:
   input:
     "barcode_metrics.txt",
-    expand("/umireads/{samplename}_consesnsus_mapped.bam", samplename=config["samples"])
+    expand("/filteredreads/{samplename}_consesnsus_mapped_filtered.bam", samplename=config["samples"])
 
 #First step is to extract the barcodes from the raw .bcl
 rule extract_illumina_barcodes:
@@ -116,3 +116,17 @@ rule CreateConsensusMappedBamWithUMI:
                 "O={output.consensus_mapped} R=hg38.fa "
                 "SORT_ORDER=coordinate MAX_GAPS=-1 "
                 "ORIENTATIONS=FR"
+
+########### FILTERING CONSENSUS READS, now ready for variant calling
+rule GenerateFilteredConsensusReads:
+    input:
+        consensus_mapped="/umireads/{samplename}_consesnsus_mapped.bam"
+    output:
+        consensus_mapped_filtered="/filteredreads/{samplename}_consesnsus_mapped_filtered.bam"
+    shell:
+        "java -Xmx4g -jar fgbio-0.7.0.jar FilerConsensusReads "
+        "--input={input._consesnsus_mapped}"
+        "--output={output.consensus_mapped_filtered} "
+        "--min-reads=3 "
+        "--min-base-quality=50 "
+        "--max-no-call-fraction=0.05 "
