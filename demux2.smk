@@ -88,12 +88,12 @@ rule CallMolecularConsensusReads:
         grouped_sample="/umireads/{samplename}_grouped.bam"
     output:
         consensus_unmapped="/umireads/{samplename}_consesnsus_unmapped.bam"
-        consensus_rejected="/umireads/{samplename}_consesnsus_rejected.bam"
+        consensus_reject="/umireads/{samplename}_consesnsus_rejected.bam"
     shell:
         "java -Xmx4g -jar fgbio-0.7.0.jar CallMolecularConsensusReads "
             "--input={input.grouped_sample} "
             "--output={output.consensus_unmapped} "
             "--min-reads=1 "
-            "--rejects={output.consensus_rejected} "
+            "--rejects={output.consensus_reject} "
             "--min-input-base-quality=30 "
             "--read-group-id={samplename}"
