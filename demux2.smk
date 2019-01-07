@@ -7,7 +7,7 @@ samplename = config["samples"]
 rule all:
   input:
     "barcode_metrics.txt",
-    expand("/filteredreads/{samplename}_consesnsus_mapped_filtered.bam", samplename=config["samples"])
+    expand("/filteredreads/{samplename}_consensus_mapped_filtered.bam", samplename=config["samples"])
 
 #First step is to extract the barcodes from the raw .bcl
 rule extract_illumina_barcodes:
@@ -87,13 +87,13 @@ rule CallMolecularConsensusReads:
     input:
         grouped_sample="/umireads/{samplename}_grouped.bam"
     output:
-        consensus_unmapped="/umireads/{samplename}_consesnsus_unmapped.bam"
+        consensus_unmapped="/umireads/{samplename}_consensus_unmapped.bam"
     shell:
         "java -Xmx4g -jar fgbio-0.7.0.jar CallMolecularConsensusReads "
             "--input={input.grouped_sample} "
             "--output={output.consensus_unmapped} "
             "--min-reads=1 "
-            "--rejects=/umireads/{samplename}_consesnsus_rejected.bam "
+            "--rejects=/umireads/{samplename}_consensus_rejected.bam "
             "--min-input-base-quality=30 "
             "--read-group-id={samplename}"
 
@@ -101,9 +101,9 @@ rule CallMolecularConsensusReads:
 ########## ALIGNING READS FROM UNMAPPED BAMs TO REF GENOME AND MERGING UMIs
 rule CreateConsensusMappedBamWithUMI:
     input:
-        consensus_unmapped="/umireads/{samplename}_consesnsus_unmapped.bam"
+        consensus_unmapped="/umireads/{samplename}_consensus_unmapped.bam"
     output:
-        consensus_mapped="/umireads/{samplename}_consesnsus_mapped.bam"
+        consensus_mapped="/umireads/{samplename}_consensus_mapped.bam"
     shell:
         "module load picard/2.8.0"
         "java -Xmx4g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar SamToFastq "
@@ -120,12 +120,12 @@ rule CreateConsensusMappedBamWithUMI:
 ########### FILTERING CONSENSUS READS, now ready for variant calling
 rule GenerateFilteredConsensusReads:
     input:
-        consensus_mapped="/umireads/{samplename}_consesnsus_mapped.bam"
+        consensus_mapped="/umireads/{samplename}_consensus_mapped.bam"
     output:
-        consensus_mapped_filtered="/filteredreads/{samplename}_consesnsus_mapped_filtered.bam"
+        consensus_mapped_filtered="/filteredreads/{samplename}_consensus_mapped_filtered.bam"
     shell:
         "java -Xmx4g -jar fgbio-0.7.0.jar FilerConsensusReads "
-        "--input={input._consesnsus_mapped}"
+        "--input={input._consensus_mapped}"
         "--output={output.consensus_mapped_filtered} "
         "--min-reads=3 "
         "--min-base-quality=50 "
