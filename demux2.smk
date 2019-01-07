@@ -45,5 +45,25 @@ rule illumina_basecalls_to_sam:
         "NUM_PROCESSORS=8 "
 
 
+rule unmapped_bam_to_mapped_bam_with_umi:
+    input:
+      unmapped_sample="/demuxed/{samplename}_unmapped.bam",
+    output:
+      mapped_sample="/demuxed/{samplename}_mapped.bam"
+    shell:
+      "module load picard/2.8.0"
+      "java -Xmx4g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar SamToFastq "
+      "I={input.unmapped_sample}"
+      "F=/dev/stdout INTERLEAVE=true "
+          "| bwa mem -p -t 8 hg38.fa /dev/stdin "
+          "| java -Xmx4g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar MergeBamAlignment "
+          "/demuxed/{samplename}_unmapped.bam ALIGNED=/dev/stdin "
+          "O={output.mapped_sample} R=hg38.fa "
+          "SORT_ORDER=coordinate MAX_GAPS=-1 "
+          "ORIENTATIONS=FR"
+
+
+
+
   #Samplename Example   cllid_0381_121407_P_g01.bam
   #Samplename Structure cllid_####_MMDDYY_T_g##
