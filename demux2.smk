@@ -22,7 +22,7 @@ rule extract_illumina_barcodes:
         "READ_STRUCTURE=100T8B9M8B100T "
         "METRICS_FILE={output.metrics} "
 
-rule illumina_basecalls_to_sam:
+rule illumina_basecalls_to_sam_demux:
     input:
       basecalls_dir="basecallsdir",
       barcodes_dir="barcodes",
@@ -46,6 +46,8 @@ rule illumina_basecalls_to_sam:
 
 
 rule unmapped_bam_to_mapped_bam_with_umi:
+#This command consists of three steps:
+#1) Convert BAM to FASTQ, 2)Align reads using BWA-MEM, 3)Include UMI tags from unmapped BAM in the mapped BAM
     input:
       unmapped_sample="/demuxed/{samplename}_unmapped.bam",
     output:
@@ -62,6 +64,20 @@ rule unmapped_bam_to_mapped_bam_with_umi:
           "SORT_ORDER=coordinate MAX_GAPS=-1 "
           "ORIENTATIONS=FR"
 
+
+rule GroupReadsByUmi:
+#The reads are grouped into familes that share the same UMI
+    input:
+      mapped_sample="/demuxed/{samplename}_mapped.bam"
+    output:
+      grouped_sample="/demuxed/{samplename}_grouped.bam"
+    shell:
+      "module load java/1.8"
+      "wget https://github.com/fulcrumgenomics/fgbio/releases/download/0.7.0/fgbio-0.7.0.jar"
+      "java -Xmx1g -jar fgbio-0.7.0.jar GroupReadsByUmi "
+          "--{input.mapped_sample} --output={output.grouped_sample} "
+          "--strategy=adjaceny --edits=1 --min-map-q=20 "
+          "--assign-tag=MI "
 
 
 
