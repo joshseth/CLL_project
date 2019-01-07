@@ -7,7 +7,7 @@ samplename = config["samples"]
 rule all:
   input:
     "barcode_metrics.txt",
-    expand("/demuxed/{samplename}_mapped.bam", samplename=config["samples"])
+    expand("/demuxed/{samplename}_grouped.bam", samplename=config["samples"])
 
 rule extract_illumina_barcodes:
     input: basecalls_dir="basecallsdir", barcodes_file="barcode_file.txt"
