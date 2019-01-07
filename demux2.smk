@@ -10,7 +10,7 @@ rule all:
     expand("demuxed/{samplename}.bam", samplename=config["samples"])
 
 rule extract_illumina_barcodes:
-    input: basecalls_dir="basecallsdir", barcodes_file="barcodes.txt"
+    input: basecalls_dir="basecallsdir", barcodes_file="barcode_file.txt"
     output: barcodes_dir="barcodes", metrics="barcode_metrics.txt"
     shell:
         "module load picard/2.8.0 "
