@@ -7,8 +7,9 @@ samplename = config["samples"]
 rule all:
   input:
     "barcode_metrics.txt",
-    expand("/demuxed/{samplename}_grouped.bam", samplename=config["samples"])
+    expand("/umireads/{samplename}_consesnsus_unmapped.bam", samplename=config["samples"])
 
+#First step is to extract the barcodes from the raw .bcl
 rule extract_illumina_barcodes:
     input: basecalls_dir="basecallsdir", barcodes_file="barcode_file.txt"
     output: barcodes_dir="barcodes", metrics="barcode_metrics.txt"
@@ -22,6 +23,7 @@ rule extract_illumina_barcodes:
         "READ_STRUCTURE=100T8B9M8B100T "
         "METRICS_FILE={output.metrics} "
 
+#This step does the demux based on the 2 sample indeces
 rule illumina_basecalls_to_sam_demux:
     input:
       basecalls_dir="basecallsdir",
@@ -45,9 +47,9 @@ rule illumina_basecalls_to_sam_demux:
         "NUM_PROCESSORS=8 "
 
 
-rule unmapped_bam_to_mapped_bam_with_umi:
 #This command consists of three steps:
 #1) Convert BAM to FASTQ, 2)Align reads using BWA-MEM, 3)Include UMI tags from unmapped BAM in the mapped BAM
+rule unmapped_bam_to_mapped_bam_with_umi:
     input:
       unmapped_sample="/demuxed/{samplename}_unmapped.bam",
     output:
@@ -64,13 +66,12 @@ rule unmapped_bam_to_mapped_bam_with_umi:
           "SORT_ORDER=coordinate MAX_GAPS=-1 "
           "ORIENTATIONS=FR"
 
-
-rule GroupReadsByUmi:
 #The reads are grouped into familes that share the same UMI
+rule GroupReadsByUmi:
     input:
       mapped_sample="/demuxed/{samplename}_mapped.bam"
     output:
-      grouped_sample="/demuxed/{samplename}_grouped.bam"
+      grouped_sample="/umireads/{samplename}_grouped.bam"
     shell:
       "module load java/1.8"
       "wget https://github.com/fulcrumgenomics/fgbio/releases/download/0.7.0/fgbio-0.7.0.jar"
@@ -81,5 +82,18 @@ rule GroupReadsByUmi:
 
 
 
-  #Samplename Example   cllid_0381_121407_P_g01.bam
-  #Samplename Structure cllid_####_MMDDYY_T_g##
+#Consensus reads will be generate using fgbio's CallMolecularConsensusReads with default parameters
+rule CallMolecularConsensusReads
+    input:
+        grouped_sample="/umireads/{samplename}_grouped.bam"
+    output:
+        consensus_unmapped="/umireads/{samplename}_consesnsus_unmapped.bam"
+        consensus_rejected="/umireads/{samplename}_consesnsus_rejected.bam"
+    shell:
+    "java -Xmx4g -jar fgbio-0.7.0.jar CallMolecularConsensusReads "
+        "--input={input.grouped_sample} "
+        "--output={output.consensus_unmapped} "
+        "--min-reads=1 "
+        "--rejects={output.consensus_rejected} "
+        "--min-input-base-quality=30 "
+        "--read-group-id={samplename}"
