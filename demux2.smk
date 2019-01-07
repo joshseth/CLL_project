@@ -7,7 +7,7 @@ samplename = config["samples"]
 rule all:
   input:
     "barcode_metrics.txt",
-    expand("/umireads/{samplename}_consesnsus_unmapped.bam", samplename=config["samples"])
+    expand("/umireads/{samplename}_consesnsus_mapped.bam", samplename=config["samples"])
 
 #First step is to extract the barcodes from the raw .bcl
 rule extract_illumina_barcodes:
@@ -96,3 +96,23 @@ rule CallMolecularConsensusReads:
             "--rejects=/umireads/{samplename}_consesnsus_rejected.bam "
             "--min-input-base-quality=30 "
             "--read-group-id={samplename}"
+
+
+########## ALIGNING READS FROM UNMAPPED BAMs TO REF GENOME AND MERGING UMIs
+rule CreateConsensusMappedBamWithUMI:
+    input:
+        consensus_unmapped="/umireads/{samplename}_consesnsus_unmapped.bam"
+    output:
+        consensus_mapped="/umireads/{samplename}_consesnsus_mapped.bam"
+    shell:
+        "module load picard/2.8.0"
+        "java -Xmx4g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar SamToFastq "
+        "I={input.consensus_unmapped}"
+        "F=/dev/stdout INTERLEAVE=true "
+            "| bwa mem -p -t 8 hg38.fa /dev/stdin "
+            "| java -Xmx4g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar MergeBamAlignment "
+                "UNMAPPED={input.consensus_unmapped} "
+                "ALIGNED=/dev/stdin "
+                "O={output.consensus_mapped} R=hg38.fa "
+                "SORT_ORDER=coordinate MAX_GAPS=-1 "
+                "ORIENTATIONS=FR"
