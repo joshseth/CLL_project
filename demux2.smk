@@ -28,7 +28,7 @@ rule illumina_basecalls_to_sam:
       barcodes_dir="barcodes",
       library_params="library_params.txt"
     output:
-      demuxed=expand("demuxed/{samplename}.bam", samplename=config["samples"])
+      demuxed=expand("/demuxed/{samplename}_unmapped.bam", samplename=config["samples"])
     shell:
         "module load picard/2.8.0"
         "java -Xmx8g -jar /nfs/sw/picard-tools/picard-tools-2.8.0/picard.jar IlluminaBasecallsToSam "
