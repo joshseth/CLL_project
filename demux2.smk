@@ -125,7 +125,7 @@ rule GenerateFilteredConsensusReads:
         consensus_mapped_filtered="/filteredreads/{samplename}_consensus_mapped_filtered.bam"
     shell:
         "java -Xmx4g -jar fgbio-0.7.0.jar FilerConsensusReads "
-        "--input={input._consensus_mapped}"
+        "--input={input.consensus_mapped} "
         "--output={output.consensus_mapped_filtered} "
         "--min-reads=3 "
         "--min-base-quality=50 "
